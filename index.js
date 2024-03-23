@@ -1,4 +1,5 @@
 import express from "express";
+import session from "express-session";
 import "dotenv/config";
 import pg from "pg";
 import bcrypt from "bcrypt";
@@ -22,6 +23,24 @@ app.use(express.static("public"));
 
 // Mount middleware (so we can intercept requests)
 app.use(express.urlencoded({ extended: true }));
+
+// Session middleware
+app.use(
+  session({
+    secret: process.env.SESSION_KEY,
+    resave: false,
+    saveUninitialized: true,
+  })
+);
+
+// Middleware to check if user is authenticated
+function isAuthenticated(req, res, next) {
+  if (req.session && req.session.authenticated) {
+    return next();
+  } else {
+    res.redirect("/login");
+  }
+}
 
 // Connect to database
 const pool = new pg.Pool({
@@ -106,7 +125,7 @@ app.post("/login", async (req, res) => {
   }
 });
 
-app.get("/journal", async (req, res) => {
+app.get("/journal", isAuthenticated, async (req, res) => {
   try {
     const journalEntriesQuery = await pool.query(
       "SELECT * FROM journal_items WHERE user_id = $1 ORDER BY id ASC;",
