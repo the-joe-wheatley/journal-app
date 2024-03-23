@@ -59,6 +59,43 @@ app.get("/login", (req, res) => {
   res.render("login.ejs");
 });
 
+app.get("/journal", isAuthenticated, async (req, res) => {
+  try {
+    const journalEntriesQuery = await pool.query(
+      "SELECT * FROM journal_items WHERE user_id = $1 ORDER BY id ASC;",
+      [userId]
+    );
+    journalEntries = journalEntriesQuery.rows;
+    if (journalEntries.length === 0) {
+      res.render("journal.ejs", {
+        journalEntries: journalEntries,
+        journalEntry: emptyJournal,
+        editMode: editMode,
+      });
+    } else {
+      const foundObject = journalEntries.find(
+        (item) => JSON.stringify(item) === JSON.stringify(journalEntry)
+      );
+      if (!foundObject) {
+        journalEntry = journalEntries.slice(-1)[0];
+      }
+      res.render("journal.ejs", {
+        journalEntries: journalEntries,
+        journalEntry: journalEntry,
+        editMode: editMode,
+      });
+    }
+  } catch (err) {
+    console.error(err);
+    res.redirect("/login");
+  }
+});
+
+app.get("/logout", (req, res) => {
+  req.session.destroy();
+  res.redirect("/login");
+});
+
 app.post("/register", async (req, res) => {
   const username = req.body.username.toLowerCase();
   const password = req.body.password.toLowerCase();
@@ -102,6 +139,7 @@ app.post("/login", async (req, res) => {
             [usernameEntered]
           );
           userId = userIdQuery.rows[0].id;
+          req.session.authenticated = true;
           res.redirect("/journal");
         }
         // If password is incorrect
@@ -118,38 +156,6 @@ app.post("/login", async (req, res) => {
     else {
       console.log("A DB error has occurred.");
       res.redirect("/login");
-    }
-  } catch (err) {
-    console.error(err);
-    res.redirect("/login");
-  }
-});
-
-app.get("/journal", isAuthenticated, async (req, res) => {
-  try {
-    const journalEntriesQuery = await pool.query(
-      "SELECT * FROM journal_items WHERE user_id = $1 ORDER BY id ASC;",
-      [userId]
-    );
-    journalEntries = journalEntriesQuery.rows;
-    if (journalEntries.length === 0) {
-      res.render("journal.ejs", {
-        journalEntries: journalEntries,
-        journalEntry: emptyJournal,
-        editMode: editMode,
-      });
-    } else {
-      const foundObject = journalEntries.find(
-        (item) => JSON.stringify(item) === JSON.stringify(journalEntry)
-      );
-      if (!foundObject) {
-        journalEntry = journalEntries.slice(-1)[0];
-      }
-      res.render("journal.ejs", {
-        journalEntries: journalEntries,
-        journalEntry: journalEntry,
-        editMode: editMode,
-      });
     }
   } catch (err) {
     console.error(err);
