@@ -5,6 +5,7 @@ import bcrypt from "bcrypt";
 
 const app = express();
 const port = process.env.SERVER_PORT;
+const connectionString = process.env.DB_URL;
 
 // Variables
 var journalEntries = [];
@@ -24,11 +25,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Connect to database
 const pool = new pg.Pool({
-  user: process.env.USERNAME,
-  host: process.env.HOST,
-  database: process.env.DATABASE,
-  password: process.env.PASSWORD,
-  port: process.env.DB_PORT,
+  connectionString,
 });
 
 app.get("/", (req, res) => {
