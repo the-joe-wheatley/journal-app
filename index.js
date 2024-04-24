@@ -1,5 +1,5 @@
 import express from "express";
-import session from "express-session";
+import session from "cookie-session";
 import "dotenv/config";
 import pg from "pg";
 import bcrypt from "bcrypt";
