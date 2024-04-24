@@ -1,5 +1,6 @@
 import express from "express";
-import session from "cookie-session";
+import session from "express-session";
+import MemoryStore from "memorystore";
 import "dotenv/config";
 import pg from "pg";
 import bcrypt from "bcrypt";
@@ -27,6 +28,8 @@ app.use(express.urlencoded({ extended: true }));
 // Session middleware
 app.use(
   session({
+    cookie: { maxAge: 86400000 },
+    store: new MemoryStore({ checkPeriod: 86400000 }),
     secret: process.env.SESSION_KEY,
     resave: false,
     saveUninitialized: true,
